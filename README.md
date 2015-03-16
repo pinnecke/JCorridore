@@ -1,9 +1,8 @@
-# JCorridore
+<h3 align="center">
+JCorridore
+</h3>
 
-A proof of concept of a lightweight framework for testing that method's performances are inside a given performance corridore.
-
-
-If you want to **test** that your code runs **inside a certain range of performance** after updateing it, just write:
+###### A proof of concept of a lightweight framework for testing that method's performances are inside a given performance corridore. If you want to **test** that your code runs **inside a certain range of performance** after updateing it, just write:
 ``` Java
 @Record(repeat = 50)    
 @Constraint(allowedMedianDeviation = 10, repeat = 15)
