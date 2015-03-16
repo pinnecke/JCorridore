@@ -18,7 +18,7 @@ public void foo() {
     <a href="#ensuring-performance-inside-a-corridore">Quick Start</a> &bull; 
     <a href="#additional-options">Additional options</a> &bull; 
     <a href="#license">License</a> &bull; 
-    <a href="#Contributing">Contributing</a> &bull; 
+    <a href="#contributing">Contributing</a>
 </p>
 -------
 
