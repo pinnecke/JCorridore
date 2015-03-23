@@ -43,6 +43,11 @@ public class JCorridoreCore {
 				return Recorder.createRecord(instance, methods.get(i++));
 			} else throw new NoSuchElementException();
 		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
 		
 	}
 	

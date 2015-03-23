@@ -33,7 +33,7 @@ public class JUnitDemo6 {
 
 	private void prettryPrintIfFail(List<String> failedMethods) {
 		if (!failedMethods.isEmpty())
-			System.err.println(String.join("\n", failedMethods));
+			System.err.println(Utils.join("\n", failedMethods));
 	}																
 																	
 																	

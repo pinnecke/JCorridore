@@ -40,7 +40,7 @@ public class JUnitDemo8 {
 	// Just pretty printing
 	private void prettryPrintIfFail(List<String> failedMethods) {
 		if (!failedMethods.isEmpty())
-			System.err.println(String.join("\n", failedMethods));
+			System.err.println(Utils.join("\n", failedMethods));
 	}
 	
 	@BeforeRecord															// <-- Is called before any record/constraint

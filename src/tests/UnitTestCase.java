@@ -21,7 +21,7 @@ public class UnitTestCase {
 	}
 
 	private String print(List<String> failedMethods) {
-		return String.join("\n", failedMethods);
+		return Utils.join("\n", failedMethods);
 	}
 
 	@Record(samples = 10, revision=1)

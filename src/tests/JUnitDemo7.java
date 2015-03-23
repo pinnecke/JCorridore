@@ -36,7 +36,7 @@ public class JUnitDemo7 {
 	// Just pretty printing
 	private void prettryPrintIfFail(List<String> failedMethods) {
 		if (!failedMethods.isEmpty())
-			System.err.println(String.join("\n", failedMethods));
+			System.err.println(Utils.join("\n", failedMethods));
 	}		
 	
 	// This is just for simulating some calculations performed by 
