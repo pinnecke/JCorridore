@@ -59,8 +59,8 @@ public class JUnitDemo8 {
 			list.add(i);
 	}																		 
 	
-	@Record(repeat = 50, revision = 2)										
-	@Constraint(allowedMedianDeviation = 10, repeat = 50, revision = 2)		
+	@Record(samples = 50, revision = 2)										
+	@Constraint(allowedMedianDeviation = 10, samples = 50, revisionReference = 2)		
 	public void testFoo2() {												
 		// Call to a underlying method (e.g. Third Party)	
 		if (condition)

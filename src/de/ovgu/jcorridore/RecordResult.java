@@ -20,6 +20,12 @@ public class RecordResult {
 
 	public double variance;
 
+	long timestamp;
+	
+	public long getTimestamp() {
+		return timestamp;
+	}
+
 	/**
 	 * @param annotation
 	 */
@@ -121,7 +127,8 @@ public class RecordResult {
 		if (exception != null)
 			return "RecordResult [exception=" + exception.getMessage() + "]";
 		else
-			return "RecordResult [method=" + methodIdentifier + ", N=" + annotation.repeat() +", minimumRuntime=" + minimumRuntime + ", maximumRuntime=" + maximumRuntime + ", lowerQuartile=" + lowerQuartile + ", upperQuartile=" + upperQuartile + ", median=" + median + ", average=" + average + ", standardError=" + standardError + ", variance=" + variance + "]";
+			return "RecordResult [method=" + methodIdentifier + ", N=" + annotation.samples() +", minimumRuntime=" + minimumRuntime + ", maximumRuntime=" + maximumRuntime + ", lowerQuartile=" + lowerQuartile + ", upperQuartile=" + upperQuartile + ", median=" + median + ", average=" + average + ", standardError=" + standardError + ", variance=" + variance + "]";
 	}
+
 
 }

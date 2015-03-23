@@ -23,8 +23,12 @@ public class RecordEntry {
 	public double upperQuartile;
 	public double variance;
 	public String versionedMethodIdentifier;
+	public long timestamp;
+
+	public int historySize;
+	
 	public RecordEntry(RecordResult r) {
-		this(r.methodIdentifier, r.getAnnotation().revision(), r.getAnnotation().subject().toString(), r.getAnnotation().topic(), r.getAnnotation().comment(), r.getAnnotation().author(), r.getAnnotation().contact(), r.getAnnotation().repeat(), (int) r.getAnnotation().maximumStandardError(), r.average, r.lowerQuartile, r.maximumRuntime, r.median, r.minimumRuntime, r.standardError, r.upperQuartile, r.variance);
+		this(r.methodIdentifier, r.getAnnotation().revision(), r.getAnnotation().subject().toString(), r.getAnnotation().topic(), r.getAnnotation().comment(), r.getAnnotation().author(), r.getAnnotation().contact(), r.getAnnotation().samples(), (int) r.getAnnotation().maximumStandardError(), r.average, r.lowerQuartile, r.maximumRuntime, r.median, r.minimumRuntime, r.standardError, r.upperQuartile, r.variance, r.timestamp, r.getAnnotation().historySize());
 	}
 	/**
 	 * @param methodIdentifier
@@ -45,7 +49,7 @@ public class RecordEntry {
 	 * @param upperQuartile
 	 * @param variance
 	 */
-	public RecordEntry(String methodIdentifier, int revision, String subject, String topic, String comment, String author, String contact, int repeat, int maximumStandardError, double average, double lowerQuartile, double maximumRuntime, double median, double minimumRuntime, double standardError, double upperQuartile, double variance) {
+	public RecordEntry(String methodIdentifier, int revision, String subject, String topic, String comment, String author, String contact, int repeat, int maximumStandardError, double average, double lowerQuartile, double maximumRuntime, double median, double minimumRuntime, double standardError, double upperQuartile, double variance, long timestamp, int historySize) {
 		super();
 		this.methodIdentifier = methodIdentifier;
 		this.versionedMethodIdentifier = methodIdentifier + "$" + revision;
@@ -65,6 +69,8 @@ public class RecordEntry {
 		this.standardError = standardError;
 		this.upperQuartile = upperQuartile;
 		this.variance = variance;
+		this.timestamp = timestamp;
+		this.historySize = historySize;
 	}
 	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)

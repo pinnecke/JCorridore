@@ -44,9 +44,9 @@ public @interface Constraint {
 	 * Specify how often this method is rerun before a stable result is expected and reported against
 	 * the current template for the actual revision.
 	 */
-	int repeat();
+	int samples();
 
-	int revision() default 1;
+	int revisionReference() default 1;
 	
 	
 	

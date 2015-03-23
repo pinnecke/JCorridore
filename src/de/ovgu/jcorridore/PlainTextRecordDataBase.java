@@ -7,12 +7,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import de.ovgu.jcorridore.annotations.Record;
+
 public class PlainTextRecordDataBase implements RecordDataBase {
+	
+	final static Logger logger = LogManager.getLogger(PlainTextRecordDataBase.class.getName());
 
 	private String filename;
 	private Path fpath;
@@ -24,12 +34,12 @@ public class PlainTextRecordDataBase implements RecordDataBase {
 		this.filename = filename;
 		
 		if (Files.exists(fpath)) {
-			try {
-				Stream<String> lines = Files.lines(fpath);
+			try (Stream<String> lines = Files.lines(fpath)) {
+				logger.info("Loading records from \"" + fpath.toUri() + "\"...");
 				lines.forEach(line -> importToDataBase(line));
-				lines.close();
 			} catch (IOException e) {
 				e.printStackTrace();
+				logger.error("Failed loading records from \"" + fpath.toUri() + "\", message: " + e.getMessage());
 			}
 		}
 	}
@@ -63,8 +73,10 @@ public class PlainTextRecordDataBase implements RecordDataBase {
 		double standardError = Double.valueOf(components[12]);
 		double upperQuartile = Double.valueOf(components[15]);
 		double variance = Double.valueOf(components[16]);
+		long timestamp = Long.valueOf(components[17]);
+		int historySize = Integer.valueOf(components[18]);
 
-		storeRecord(new RecordEntry(methodIdentifier, revision, subject, topic, comment, author, contact, repeat, maximumStandardError, average, lowerQuartile, maximumRuntime, median, minimumRuntime, standardError, upperQuartile, variance));
+		storeRecord(new RecordEntry(methodIdentifier, revision, subject, topic, comment, author, contact, repeat, maximumStandardError, average, lowerQuartile, maximumRuntime, median, minimumRuntime, standardError, upperQuartile, variance, timestamp, historySize));
 	}
 
 	public void save() throws IOException  {
@@ -72,12 +84,14 @@ public class PlainTextRecordDataBase implements RecordDataBase {
 			File f = new File(filename);
 			f.renameTo(new File(filename + ".old"));
 		}
-		FileWriter ps = new FileWriter(new File(filename));
-		for (List<RecordEntry> re : storedRecords.values())
-			for (RecordEntry e : re) {
-				ps.write(toString(e) + "\n");
+		FileWriter writer = new FileWriter(new File(filename));
+		for (List<RecordEntry> recordEntryList : storedRecords.values())
+			for (RecordEntry singleEntry : recordEntryList) {
+				writer.write(toString(singleEntry) + "\n");
 			}
-		ps.close();
+		writer.close();
+		
+		logger.info("Saved data base to \"" + fpath.toUri());
 	}
 
 	@Override
@@ -86,6 +100,27 @@ public class PlainTextRecordDataBase implements RecordDataBase {
 			storedRecords.put(record.versionedMethodIdentifier, new ArrayList<>());
 		}
 		storedRecords.get(record.versionedMethodIdentifier).add(record);
+		
+		logger.debug("Added \"" + record.versionedMethodIdentifier + "\" to database (in memory).");
+		
+		cleanRecordHistory(record);
+	}
+
+	private void cleanRecordHistory(RecordEntry record) {
+		if (storedRecords.get(record.versionedMethodIdentifier).size() > record.historySize) {
+			logger.info("Method history for \"" + record.versionedMethodIdentifier + "\" will be cleaned.");
+			List<RecordEntry> recordHistory = storedRecords.get(record.versionedMethodIdentifier);			
+			Collections.sort(recordHistory, (o1, o2) ->  Long.valueOf(o1.timestamp).compareTo(Long.valueOf(o2.timestamp)));
+			
+			
+			
+			while (recordHistory.size() > record.historySize) {
+				logger.info("Removed record from date \"" + record.timestamp);
+				recordHistory.remove(0);
+			}
+			storedRecords.put(record.versionedMethodIdentifier, recordHistory);
+		}
+		
 	}
 
 	@Override
@@ -101,7 +136,7 @@ public class PlainTextRecordDataBase implements RecordDataBase {
 	}
 	
 	private String toString(RecordEntry entry) {
-		return entry.author.replace(";", ",") + ";" + entry.average + ";" + entry.comment.replace(";", ",") + ";" + entry.contact.replace(";", ",") + ";" + entry.lowerQuartile + ";" + entry.maximumRuntime + ";" + entry.maximumStandardError + ";" + entry.median + ";" + entry.methodIdentifier + ";" + entry.minimumRuntime + ";" + entry.repeat + ";" + entry.revision + ";" + entry.standardError + ";" + entry.subject + ";" + entry.topic + ";" + entry.upperQuartile + ";" + entry.variance;
+		return entry.author.replace(";", ",") + ";" + entry.average + ";" + entry.comment.replace(";", ",") + ";" + entry.contact.replace(";", ",") + ";" + entry.lowerQuartile + ";" + entry.maximumRuntime + ";" + entry.maximumStandardError + ";" + entry.median + ";" + entry.methodIdentifier + ";" + entry.minimumRuntime + ";" + entry.repeat + ";" + entry.revision + ";" + entry.standardError + ";" + entry.subject + ";" + entry.topic + ";" + entry.upperQuartile + ";" + entry.variance + ";" + entry.timestamp +";" + entry.historySize;
 	}
 
 }

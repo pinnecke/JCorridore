@@ -30,7 +30,7 @@ import de.ovgu.jcorridore.annotations.Record;
 // a method's performance record can be reset (or set to a new version of that method)
 public class JUnitDemo6 {
 	
-	// Just pretty printing
+
 	private void prettryPrintIfFail(List<String> failedMethods) {
 		if (!failedMethods.isEmpty())
 			System.err.println(String.join("\n", failedMethods));
@@ -47,8 +47,8 @@ public class JUnitDemo6 {
 			list.add(i);
 	}																		 
 	
-	@Record(repeat = 50, revision = 2)										// <-- Reevaluate "testFoo" and check it's performance
-	@Constraint(allowedMedianDeviation = 10, repeat = 50, revision = 2)		//	   The constraint now also based on the second version
+	@Record(samples = 50, revision = 2, historySize = 5)										// <-- Reevaluate "testFoo" and check it's performance
+	@Constraint(allowedMedianDeviation = 10, samples = 50, revisionReference = 2)		//	   The constraint now also based on the second version
 	public void testFoo() {												
 		// Call to a underlying method (e.g. Third Party)			
 		someMethod();												

@@ -42,7 +42,7 @@ public @interface Record {
 	 * Specify how often this method is rerun before a stable result is expected and reported for the
 	 * template generator for the current revision.
 	 */
-	int repeat();
+	int samples();
 	
 	int revision() default 1;
 	
@@ -64,4 +64,6 @@ public @interface Record {
 	 * to cluster methods in a semantic style.
 	 */	
 	String topic() default "default";
+
+	int historySize() default 20;
 }

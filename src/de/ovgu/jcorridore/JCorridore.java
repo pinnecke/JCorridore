@@ -5,9 +5,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import de.ovgu.jcorridore.annotations.Constraint;
 
 public class JCorridore {
+	
+	final static Logger logger = LogManager.getLogger(JCorridore.class.getName());
 
 	private String filename;
 	private String path;
@@ -31,16 +36,21 @@ public class JCorridore {
 			while (it.hasNext()) {
 				RecordResult rr = it.next();
 				RecordEntry re = new RecordEntry(rr);
+				
+				logger.info("Running on \"" + re.versionedMethodIdentifier + "\"...");
 
 				if (!db.containsRecordFor(re.versionedMethodIdentifier)) {
+					logger.info("For \"" + re.versionedMethodIdentifier + "\" does not exists a database record currently.");
 					db.storeRecord(re);
 				} else {
 					for (Method method : constraints) {
 						Constraint c = method.getAnnotation(Constraint.class);
-						final String versionedMethodIdentifier = ReflectionUtils.makeMethodIdentifier(instance, method) + "$" + c.revision();
+						final String versionedMethodIdentifier = ReflectionUtils.makeMethodIdentifier(instance, method) + "$" + c.revisionReference();
 
 						int lastSize = failedMethods.size();
 						if (versionedMethodIdentifier.equals(re.versionedMethodIdentifier)) {
+							
+							logger.debug("Check constraints for \"" + re.versionedMethodIdentifier + "\"...");
 
 							for (RecordEntry entry : db.get(re.versionedMethodIdentifier)) {
 								test(rr.getAverage(), c.allowedAverageDeviation(), entry.average, "mean", failedMethods, re);
@@ -52,11 +62,16 @@ public class JCorridore {
 								test(rr.getUpperQuartile(), c.allowedUpperQuartileDeviation(), entry.upperQuartile, "upper quartile", failedMethods, re);
 								test(rr.getVariance(), c.allowedVarianceDeviation(), entry.variance, "variance", failedMethods, re);
 
-								if (failedMethods.size() != lastSize)
+								if (failedMethods.size() != lastSize) {
+									logger.info("Method \"" + re.versionedMethodIdentifier + "\" violates at least one constraint.");
 									break;
+								}
 							}
 						}
-						db.storeRecord(re);
+						if (failedMethods.size() == lastSize) {
+							logger.info("Method \"" + re.versionedMethodIdentifier + "\" passes.");
+							db.storeRecord(re);
+						}
 					}
 				}
 			}

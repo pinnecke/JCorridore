@@ -24,16 +24,16 @@ public class UnitTestCase {
 		return String.join("\n", failedMethods);
 	}
 
-	@Record(repeat = 10, revision=1)
-	@Constraint(allowedMaximumDeviation = 100, allowedMinimumDeviation = 100, repeat = 10, revision=1)
+	@Record(samples = 10, revision=1)
+	@Constraint(allowedMaximumDeviation = 100, allowedMinimumDeviation = 100, samples = 10, revisionReference=1)
 	public void run1() {
 		List<Integer> l = new ArrayList<>();
 		for (int i = 0; i < maxLimit; i++)
 			l.add(i);
 	}
 
-	@Record(repeat = 100, revision=1)
-	@Constraint(repeat = 10, revision=1)
+	@Record(samples = 100, revision=1)
+	@Constraint(samples = 10, revisionReference=1)
 	public void run2() {
 		List<Integer> l = new ArrayList<>();
 		for (int i = 0; i < 300000; i++)

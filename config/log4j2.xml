@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="ERROR">
+  <Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d %-7level %logger{36} - %msg%n"/>
+    </Console>
+    <File name="MyFile" fileName="logs/app.log">
+      <PatternLayout pattern="%d %-7level %logger{36} - %msg%n"/>
+    </File>
+  </Appenders>
+  <Loggers>
+    <Root level="all">
+      <!-- Only events at DIAG level or more specific are sent to the console. -->
+      <AppenderRef ref="Console" level="diag" />
+      <AppenderRef ref="MyFile" level="trace" />
+    </Root>
+  </Loggers>
+</Configuration>

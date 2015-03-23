@@ -39,8 +39,8 @@ public class JUnitDemo4 {
 			list.add(i);
 	}
 	
-	@Record(repeat = 50)	
-	@Constraint(allowedMedianDeviation = 10, repeat = 50)
+	@Record(samples = 50)	
+	@Constraint(allowedMedianDeviation = 10, samples = 50)
 	public void testFoo() {											// <-- Do not test "testFoo" any longer.
 		// Call to a underlying method (e.g. Third Party)			//     Instead record it's performance over
 		someMethod();												//	   e.g. 10 runs. If historic performance

@@ -16,7 +16,7 @@ public class Recorder {
 		final String methodIdentifer = ReflectionUtils.makeMethodIdentifier(instance, method);
 		final RecordResult result = new RecordResult(recordAnnotation, methodIdentifer);
 
-		final int repeat = recordAnnotation.repeat();
+		final int repeat = recordAnnotation.samples();
 		
 		if (repeat < 0) {
 			result.setException(new IllegalArgumentException(BAD_REPEAT_COUNT));
@@ -44,6 +44,7 @@ public class Recorder {
 			result.maximumRuntime = statistics.getMax();
 			result.variance = statistics.getVariance();
 			result.standardError = Math.sqrt(statistics.getVariance());
+			result.timestamp = System.currentTimeMillis();
 			
 		}
 
