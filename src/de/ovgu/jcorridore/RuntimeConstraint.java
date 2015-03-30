@@ -3,22 +3,23 @@ package de.ovgu.jcorridore;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 
-import de.ovgu.jcorridore.JCorridore;
-
 public class RuntimeConstraint {
+
+	final static Logger logger = LogManager.getLogger(RuntimeConstraint.class
+			.getName());
 
 	public static class CallerInfo {
 
@@ -38,9 +39,9 @@ public class RuntimeConstraint {
 			this.callerFileName = callerFileName;
 		}
 
-		public Class<?> getCallerClass() throws ClassNotFoundException {
-			return ClassLoader.getSystemClassLoader()
-					.loadClass(callerClassName);
+		public Class<?> getCallerClass(final ClassLoader cl)
+				throws ClassNotFoundException {
+			return cl.loadClass(callerClassName);
 		}
 
 		public String getCallerFileName() {
@@ -78,19 +79,39 @@ public class RuntimeConstraint {
 		}
 
 		public Configuration(final String fromPropertyFile) {
-
-			try (FileReader reader = new FileReader(new File(fromPropertyFile))) {
-				final Properties properties = new Properties();
-				properties.load(reader);
-				final String storeAt = (String) properties.get(KEY_STORE_AT);
-				if (storeAt != null || !Files.exists(Paths.get(storeAt)))
-					storeRecordsPath = Paths.get(storeAt);
-				else
-					loadDefaultProperties(true);
-
-			} catch (Exception e) {
-				e.printStackTrace();
+			if (!Files.exists(Paths.get(fromPropertyFile))) {
 				loadDefaultProperties(true);
+				logger.warn("Unable to access file \"" + fromPropertyFile
+						+ "\". Recording/Checking will run with file \""
+						+ KEY_STORE_AT_DEFAULT + "\" in working directory.");
+			} else {
+				logger.debug("Property file:\"" + fromPropertyFile + "\"");
+
+				try (FileReader reader = new FileReader(new File(
+						fromPropertyFile))) {
+					final Properties properties = new Properties();
+					properties.load(reader);
+					final String storeAt = (String) properties
+							.get(KEY_STORE_AT);
+					if (storeAt != null && new File(storeAt).canWrite()) {
+						logger.debug("Database file:\"" + storeAt + "\"");
+						storeRecordsPath = Paths.get(storeAt);
+					} else {
+						logger.warn("Database file not writable:\"" + storeAt
+								+ "\"");
+						loadDefaultProperties(true);
+					}
+
+				} catch (Exception e) {
+					e.printStackTrace();
+					logger.warn("Unable IOException for file \""
+							+ fromPropertyFile
+							+ "\". Recording/Checking will run with file \""
+							+ KEY_STORE_AT_DEFAULT
+							+ "\" in working directory. Message: "
+							+ e.getMessage());
+					loadDefaultProperties(true);
+				}
 			}
 		}
 
@@ -118,39 +139,43 @@ public class RuntimeConstraint {
 
 	private static Method findMethod(final CallerInfo ci) {
 		try {
-			for (Method candidate : ci.getCallerClass().getMethods()) {
-				System.out.println(candidate.getName());
+			for (Method candidate : ci.getCallerClass(classLoader).getMethods()) {
 				if (candidate.getName().equals(ci.callerMethod)) {
+					logger.debug("Found method \"" + ci.callerMethod + "\"");
 					return candidate;
 				}
 			}
 		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(STR_BAD_CLASS_NAME);
+			final String msg = STR_BAD_CLASS_NAME + "(" + ci.callerMethod + ")";
+			logger.error(msg);
+			throw new RuntimeException(msg);
 		}
 		throw new RuntimeException(STR_BAD_METHOD);
 	}
+
 	private static CallerInfo getCaller() {
 		StackTraceElement ste = Thread.currentThread().getStackTrace()[3];
 		return new CallerInfo(ste.getClassName(), ste.getMethodName(),
 				ste.getLineNumber(), ste.getFileName());
 	}
 
-	public static boolean inject() {
+	static ClassLoader classLoader;
+
+	public static boolean inject(Class<?> clazz) {
+		classLoader = clazz.getClassLoader();
 		if (injectFlag) {
 			if (++callCount > 1)
 				throw new IllegalStateException();
 			injectFlag = false;
-			
+
 			final Configuration config = loadConfiguration();
 			final CallerInfo ci = getCaller();
 			final Method m = findMethod(ci);
 
 			try {
-				runRuntimeConstraint(ci.getCallerClass(), m, config.storeRecordsPath);
-				m.invoke(ci.getCallerClass().newInstance(), new Object[0]);
-			} catch (IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException | InstantiationException
-					| ClassNotFoundException e) {
+				runRuntimeConstraint(ci.getCallerClass(classLoader), m,
+						config.storeRecordsPath);
+			} catch (IllegalArgumentException | ClassNotFoundException e) {
 				e.printStackTrace();
 			}
 			injectFlag = true;
@@ -160,18 +185,18 @@ public class RuntimeConstraint {
 		return !injectFlag;
 	}
 
-	private static void runRuntimeConstraint(Class<?> classUnderTest, Method methodUnderTest, Path storeFilePath) {
-		List<String> failedMethods = new JCorridore(storeFilePath).run(classUnderTest, methodUnderTest);			
-		prettryPrintIfFail(failedMethods);									
-		Assert.assertEquals(0, failedMethods.size());		
+	private static void runRuntimeConstraint(Class<?> classUnderTest,
+			Method methodUnderTest, Path storeFilePath) {
+		logger.info("Running on: " + classUnderTest.getName()
+				+ ", method under test: " + methodUnderTest + ", file = "
+				+ storeFilePath);
+
+		List<String> failedMethods = new JCorridore(storeFilePath).run(
+				classUnderTest, methodUnderTest);
+		Assert.assertEquals(Utils.join("\n", failedMethods), 0,
+				failedMethods.size());
 	}
-	
-	// Just pretty printing
-		private static void prettryPrintIfFail(List<String> failedMethods) {
-			if (!failedMethods.isEmpty())
-				System.err.println(Utils.join("\n", failedMethods));
-		}
-		
+
 	private static Configuration loadConfiguration() {
 
 		Configuration config = new Configuration();
@@ -179,8 +204,15 @@ public class RuntimeConstraint {
 		try {
 			List<URL> propFileUrls = Collections.list(RuntimeConstraint.class
 					.getClassLoader().getResources(FILE_CONFIG_FILENAME));
-			if (!propFileUrls.isEmpty())
-				config = new Configuration(propFileUrls.get(0).getFile());
+			if (!propFileUrls.isEmpty()) {
+				final String configFile = propFileUrls.get(0).getFile();
+				logger.info("Configuration file found: " + configFile);
+				config = new Configuration(configFile);
+			} else {
+				logger.warn("Configuration file missing in class path. Default location for record database is used: "
+						+ Configuration.KEY_STORE_AT_DEFAULT
+						+ " at working directory.");
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

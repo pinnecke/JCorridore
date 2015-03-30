@@ -3,7 +3,6 @@ package de.ovgu.jcorridore;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -13,7 +12,8 @@ import de.ovgu.jcorridore.annotations.Constraint;
 
 public class JCorridore {
 
-	final static Logger logger = LogManager.getLogger(JCorridore.class.getName());
+	final static Logger logger = LogManager.getLogger(JCorridore.class
+			.getName());
 
 	private String filename;
 	private Path path;
@@ -36,43 +36,83 @@ public class JCorridore {
 				PlainTextRecordDataBase db = new PlainTextRecordDataBase(path);
 				RecordEntry re = new RecordEntry(rr);
 
-				logger.info("Running on \"" + re.versionedMethodIdentifier + "\"...");
+				logger.info("Running on \"" + re.versionedMethodIdentifier
+						+ "\"...");
 
 				if (!db.containsRecordFor(re.versionedMethodIdentifier)) {
-					logger.info("For \"" + re.versionedMethodIdentifier + "\" does not exists a database record currently.");
+					logger.info("For \"" + re.versionedMethodIdentifier
+							+ "\" does not exists a database record currently.");
 					db.storeRecord(re);
+					db.save();
+					// run(clazz, method);
+					return new ArrayList<String>();
 				} else {
 					if (JCorridoreCore.checkConstraints(clazz, method)) {
 						Constraint c = method.getAnnotation(Constraint.class);
-						final String versionedMethodIdentifier = ReflectionUtils.makeMethodIdentifier(instance, method) + "$" + c.revisionReference();
+						final String versionedMethodIdentifier = ReflectionUtils
+								.makeMethodIdentifier(instance, method)
+								+ "$"
+								+ c.revisionReference();
 
 						int lastSize = failedMethods.size();
-						if (versionedMethodIdentifier.equals(re.versionedMethodIdentifier)) {
+						if (versionedMethodIdentifier
+								.equals(re.versionedMethodIdentifier)) {
 
-							logger.debug("Check constraints for \"" + re.versionedMethodIdentifier + "\"...");
+							logger.debug("Check constraints for \""
+									+ re.versionedMethodIdentifier + "\"...");
 
-							for (RecordEntry entry : db.get(re.versionedMethodIdentifier)) {
-								test(rr.getAverage(), c.allowedAverageDeviation(), entry.average, "mean", failedMethods, re);
-								test(rr.getLowerQuartile(), c.allowedLowerQuartileDeviation(), entry.lowerQuartile, "lower quartile", failedMethods, re);
-								test(rr.getMaximumRuntime(), c.allowedMaximumDeviation(), entry.maximumRuntime, "maximum runtime", failedMethods, re);
-								test(rr.getMedian(), c.allowedMedianDeviation(), entry.median, "median", failedMethods, re);
-								test(rr.getMinimumRuntime(), c.allowedMinimumDeviation(), entry.minimumRuntime, "minimum runtime", failedMethods, re);
-								test(rr.getStandardError(), c.allowedStandardError(), entry.standardError, "standard error", failedMethods, re);
-								test(rr.getUpperQuartile(), c.allowedUpperQuartileDeviation(), entry.upperQuartile, "upper quartile", failedMethods, re);
-								test(rr.getVariance(), c.allowedVarianceDeviation(), entry.variance, "variance", failedMethods, re);
+							for (RecordEntry entry : db
+									.get(re.versionedMethodIdentifier)) {
+								test(rr.getAverage(),
+										c.allowedAverageDeviation(),
+										entry.average, "mean", failedMethods,
+										re);
+								test(rr.getLowerQuartile(),
+										c.allowedLowerQuartileDeviation(),
+										entry.lowerQuartile, "lower quartile",
+										failedMethods, re);
+								test(rr.getMaximumRuntime(),
+										c.allowedMaximumDeviation(),
+										entry.maximumRuntime,
+										"maximum runtime", failedMethods, re);
+								test(rr.getMedian(),
+										c.allowedMedianDeviation(),
+										entry.median, "median", failedMethods,
+										re);
+								test(rr.getMinimumRuntime(),
+										c.allowedMinimumDeviation(),
+										entry.minimumRuntime,
+										"minimum runtime", failedMethods, re);
+								test(rr.getStandardError(),
+										c.allowedStandardError(),
+										entry.standardError, "standard error",
+										failedMethods, re);
+								test(rr.getUpperQuartile(),
+										c.allowedUpperQuartileDeviation(),
+										entry.upperQuartile, "upper quartile",
+										failedMethods, re);
+								test(rr.getVariance(),
+										c.allowedVarianceDeviation(),
+										entry.variance, "variance",
+										failedMethods, re);
 
 								if (failedMethods.size() != lastSize) {
-									logger.info("Method \"" + re.versionedMethodIdentifier + "\" violates at least one constraint.");
+									logger.info("Method \""
+											+ re.versionedMethodIdentifier
+											+ "\" violates at least one constraint.");
 									break;
 								}
 							}
 						}
 						if (failedMethods.size() == lastSize) {
-							logger.info("Method \"" + re.versionedMethodIdentifier + "\" passes.");
+							logger.info("Method \""
+									+ re.versionedMethodIdentifier
+									+ "\" passes.");
 							db.storeRecord(re);
 						}
 					} else {
-						logger.info("Method \"" + re.versionedMethodIdentifier + "\" passes.");
+						logger.info("Method \"" + re.versionedMethodIdentifier
+								+ "\" passes.");
 						db.storeRecord(re);
 					}
 
@@ -87,9 +127,15 @@ public class JCorridore {
 		return failedMethods;
 	}
 
-	private void test(double value, double epsilon, double referenceValue, String valueName, List<String> messages, RecordEntry currentEntry) {
-		if (!(value <= referenceValue + epsilon && value >= referenceValue - epsilon))
-			messages.add(currentEntry.methodIdentifier + " value of " + valueName + " (" + value + ") does not match " + referenceValue + " +/-" + epsilon);
+	private void test(double value, double epsilon, double referenceValue,
+			String valueName, List<String> messages, RecordEntry currentEntry) {
+		if (!(value <= referenceValue + epsilon && value >= referenceValue
+				- epsilon))
+			messages.add(currentEntry.methodIdentifier + " value of "
+					+ valueName + " (" + value + ") does not match "
+					+ referenceValue + " +/-" + epsilon
+					+ ". Range has to be at least: +/- "
+					+ Math.abs(referenceValue - value));
 	}
 
 }

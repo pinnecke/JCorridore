@@ -1,11 +1,9 @@
 package de.ovgu.jcorridore;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -94,6 +92,13 @@ public class PlainTextRecordDataBase implements RecordDataBase {
 
 	@Override
 	public void storeRecord(RecordEntry record) {
+		if (!checkRecord(record)) {
+			logger.warn("Skipped record because at least on measurement is out of range (NaN): "
+					+ record.toString());
+			return;
+		} else {
+			logger.info("Record is well formed: " + record.toString());
+		}
 		if (!storedRecords.containsKey(record.versionedMethodIdentifier)) {
 			storedRecords.put(record.versionedMethodIdentifier,
 					new ArrayList<RecordEntry>());
@@ -105,30 +110,42 @@ public class PlainTextRecordDataBase implements RecordDataBase {
 
 		cleanRecordHistory(record);
 	}
-	
+
+	private boolean checkRecord(RecordEntry record) {
+		return record.average != Double.NaN
+				&& record.lowerQuartile != Double.NaN
+				&& record.maximumRuntime != Double.NaN
+				&& record.median != Double.NaN
+				&& record.minimumRuntime != Double.NaN
+				&& record.standardError != Double.NaN
+				&& record.upperQuartile != Double.NaN
+				&& record.variance != Double.NaN;
+	}
+
 	static Comparator<RecordEntry> RECORD_ENTRY_COMPARATOR = new Comparator<RecordEntry>() {
-		
+
 		@Override
 		public int compare(RecordEntry o1, RecordEntry o2) {
-			return Long.valueOf(o1.timestamp).compareTo(Long.valueOf(o2.timestamp));
+			return Long.valueOf(o1.timestamp).compareTo(
+					Long.valueOf(o2.timestamp));
 		}
 	};
 
 	private void cleanRecordHistory(RecordEntry record) {
 		if (storedRecords.get(record.versionedMethodIdentifier).size() > record.historySize) {
-			logger.info("Method history for \"" + record.versionedMethodIdentifier + "\" will be cleaned.");
-			List<RecordEntry> recordHistory = storedRecords.get(record.versionedMethodIdentifier);			
+			logger.info("Method history for \""
+					+ record.versionedMethodIdentifier + "\" will be cleaned.");
+			List<RecordEntry> recordHistory = storedRecords
+					.get(record.versionedMethodIdentifier);
 			Collections.sort(recordHistory, RECORD_ENTRY_COMPARATOR);
-			
-			
-			
+
 			while (recordHistory.size() > record.historySize) {
 				logger.info("Removed record from date \"" + record.timestamp);
 				recordHistory.remove(0);
 			}
 			storedRecords.put(record.versionedMethodIdentifier, recordHistory);
 		}
-		
+
 	}
 
 	@Override
