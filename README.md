@@ -80,9 +80,9 @@ Before you can start, you will once need to
 * add a file called `range.properties` to your **build path** which contains a path to the file in which *JCorridore* should store all the results. Assume you want to use `/temp/myproject.csv` as file, the content of `range.properties` is `store_records_path = /temp/myproject.csv`
 
 Furthermore, *JCorridore* depends on the following libraries 
- * commons-math3-3.4.1, see (Apache Commons Math)[http://commons.apache.org/proper/commons-math/download_math.cgi]
- * junit-4.12, see  (JUnit)[http://www.http://junit.org]
- * log4j-api-2.2 and log4j-core-2.2, see (Log4J)[http://logging.apache.org/log4j/2.x/]
+ * commons-math3-3.4.1, see [Apache Commons Math](http://commons.apache.org/proper/commons-math/download_math.cgi)
+ * junit-4.12, see  [JUnit](http://www.http://junit.org)
+ * log4j-api-2.2 and log4j-core-2.2, see [Log4J](http://logging.apache.org/log4j/2.x/)
 
 
 From now on, you can add `@Record` and `@Constraint` annotations to a *JUnit* `@Test`annotated method. Please ensure to surround your regular code with 
