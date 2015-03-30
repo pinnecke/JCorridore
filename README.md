@@ -130,8 +130,8 @@ private void someMethod() {
 }																		 
 
 @Test	
-@Record(repeat = 50, revision = 2)										// <-- Reevaluate "testFoo" and check it's performance
-@Constraint(allowedMedianDeviation = 10, repeat = 50, revisionRef = 2)		//	   The constraint now also based on the second version
+@Record(samples = 50, revision = 2)										// <-- Reevaluate "testFoo" and check it's performance
+@Constraint(allowedMedianDeviation = 10, samples = 50, revisionRef = 2)		//	   The constraint now also based on the second version
 public void testFoo() {	
     	if (RuntimeConstraint.inject()) {
 		// Call to a underlying method (e.g. Third Party)			
