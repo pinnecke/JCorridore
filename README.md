@@ -4,10 +4,13 @@ JCorridore
 
 ###### A proof of concept of a lightweight framework for testing that method's performances are inside a given performance corridore. If you want to **test** that your code runs **inside a certain range of performance** after updateing it, just write:
 ``` Java
-@Record(repeat = 50)    
-@Constraint(allowedMedianDeviation = 10, repeat = 15)
+@Test
+@Record(samples = 50)    
+@Constraint(allowedMedianDeviation = 10, samples = 15)
 public void foo() {
-  // Insert code here
+  if (RuntimeConstraint.inject()) {
+  	// Your test code is here
+  }
 }  
 ```
 
@@ -70,35 +73,37 @@ Unfortunately the method `testFoo` uses some method `someMethod` which are chang
 
 ## Ensuring performance inside a corridore
 Let's try it from another perspective. What's about measuring the regular runtime of the method
-`testFoo` and compare each new test against the old performance results (with a kind of smoothness)? That's basically what **JCorridore** does for you.
+`testFoo` and compare each new test against the old performance results (with a kind of smoothness)? That's basically what **JCorridore** does for you. 
+
+Before you can start, you will once need to 
+* add `jcorridore.jar` to your project's **build path**
+* add a file called `range.properties` to your **build path** which contains a path to the file in which *JCorridore* should store all the results. Assume you want to use `/temp/myproject.csv` as file, the content of `range.properties` is `store_records_path = /temp/myproject.csv`
+
+From now on, you can add `@Record` and `@Constraint` annotations to a *JUnit* `@Test`annotated method. Please ensure to surround your regular code with 
+```Java
+if (RuntimeConstraint.inject()) {
+	// your regular code goes here
+}
+```
+in order to run recording and constraint checking automatically when *JUnit* runs the method.
+
+**Example**:
 ``` Java
 public class JCorridoreTest {
 	
-	// Just pretty printing
-	private void prettryPrintIfFail(List<String> failedMethods) {
-		if (!failedMethods.isEmpty()) System.err.println(String.join("\n", failedMethods));
-	}
-																	
 	private void someMethod() {
 		final int upperBound = 100 + new Random().nextInt(1000000);	// <-- Here again the old performance					
 		//...
 	}
 	
-	@Record(repeat = 50)	
-	@Constraint(allowedMedianDeviation = 10, repeat = 50)
-	public void testFoo() {		  // <-- Do not test "testFoo" any longer.
-		someMethod();             //     Instead record it's performance over
-	}			                  //	 e.g. 50 runs. If historic performance
-								  //	 knowledge is available, create constraint
-		                          //	 that "testFoo"'s performance is allowed
-					              //	 to change around +/- 10ms for median (in this case)
 	@Test
-	public void testFooRuntimeInsideBounds() {			      // This is actually the test which checks
-		List<String> failedMethods = new JCorridore(/*PATH*/, // if each method annotated with @Constraint
-				/*FILENAME*/).run(JCorridoreTest.class);	  // is inside the given performance bounds
-		prettryPrintIfFail(failedMethods);					  // If some methods will fail, just use
-		Assert.assertEquals(0, failedMethods.size());		  // here quick and dirty pretty printing
-	}														   // The test passes .
+	@Record(samples = 50)	
+	@Constraint(allowedMedianDeviation = 10, samples = 50)
+	public void testFoo() {		  
+		if (RuntimeConstraint.inject()) {
+			someMethod();             
+		}
+	}			                 
 
 }
 ```
@@ -123,12 +128,15 @@ private void someMethod() {
 		for (int i = 0; i < upperBound; i++)
 			list.add(i);
 }																		 
-	
+
+@Test	
 @Record(repeat = 50, revision = 2)										// <-- Reevaluate "testFoo" and check it's performance
-@Constraint(allowedMedianDeviation = 10, repeat = 50, revision = 2)		//	   The constraint now also based on the second version
-public void testFoo() {												
+@Constraint(allowedMedianDeviation = 10, repeat = 50, revisionRef = 2)		//	   The constraint now also based on the second version
+public void testFoo() {	
+    	if (RuntimeConstraint.inject()) {
 		// Call to a underlying method (e.g. Third Party)			
-		someMethod();												
+		someMethod();	
+	}
 }
 ```
 ### Skipping
@@ -142,6 +150,7 @@ public void anotherMethod() {	//	   method. Here you can initialize field etc.
 		// ...
 }	
 ```
+Please note that *all* methods annotated with `@BeforeRecord` will be run for each Method annotated with `@Record`.
 
 ## Benchmarking methods
 JCorridore measures 
