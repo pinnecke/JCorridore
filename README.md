@@ -9,7 +9,7 @@ JCorridore
 @Constraint(allowedMedianDeviation = 10, samples = 15)
 public void foo() {
   if (RuntimeConstraint.inject()) {
-  	// Your test code is here
+  	// Your regular test code goes here
   }
 }  
 ```
