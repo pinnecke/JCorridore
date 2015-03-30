@@ -1,4 +1,4 @@
-package tests;
+package de.ovgu.jcorridore;
 
 import java.util.*;
 

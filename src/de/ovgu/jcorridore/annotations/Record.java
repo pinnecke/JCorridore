@@ -9,6 +9,10 @@ import java.lang.annotation.Target;
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface Record {
 
+	public @interface MyRecord2 {
+
+	}
+
 	public static class NoSubject {
 		public NoSubject() {
 			

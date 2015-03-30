@@ -10,9 +10,7 @@
   </Appenders>
   <Loggers>
     <Root level="all">
-      <!-- Only events at DIAG level or more specific are sent to the console. -->
       <AppenderRef ref="Console" level="diag" />
-      <AppenderRef ref="MyFile" level="trace" />
     </Root>
   </Loggers>
 </Configuration>

@@ -22,14 +22,11 @@ public class PlainTextRecordDataBase implements RecordDataBase {
 	final static Logger logger = LogManager
 			.getLogger(PlainTextRecordDataBase.class.getName());
 
-	private String filename;
 	private Path fpath;
 	Map<String, List<RecordEntry>> storedRecords = new HashMap<>();
 
-	public PlainTextRecordDataBase(String path, String filename) {
-		fpath = Paths.get(path, filename);
-		filename = (path.endsWith("/") ? path : path + "/") + filename;
-		this.filename = filename;
+	public PlainTextRecordDataBase(Path filePath) {
+		fpath = filePath;
 
 		if (Files.exists(fpath)) {
 			try {
@@ -85,11 +82,7 @@ public class PlainTextRecordDataBase implements RecordDataBase {
 	}
 
 	public void save() throws IOException {
-		if (Files.exists(fpath)) {
-			File f = new File(filename);
-			f.renameTo(new File(filename + ".old"));
-		}
-		FileWriter writer = new FileWriter(new File(filename));
+		FileWriter writer = new FileWriter(fpath.toFile());
 		for (List<RecordEntry> recordEntryList : storedRecords.values())
 			for (RecordEntry singleEntry : recordEntryList) {
 				writer.write(toString(singleEntry) + "\n");

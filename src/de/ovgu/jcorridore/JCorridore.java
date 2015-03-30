@@ -1,6 +1,7 @@
 package de.ovgu.jcorridore;
 
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -11,45 +12,43 @@ import org.apache.logging.log4j.Logger;
 import de.ovgu.jcorridore.annotations.Constraint;
 
 public class JCorridore {
-	
+
 	final static Logger logger = LogManager.getLogger(JCorridore.class.getName());
 
 	private String filename;
-	private String path;
+	private Path path;
 
-	public JCorridore(String path, String filename) {
-		this.path = path;
-		this.filename = filename;
+	public JCorridore(Path storeToFile) {
+		this.path = storeToFile;
 	}
 
-	public List<String> run(Class<?> clazz) {
+	public List<String> run(Class<?> clazz, Method method) {
 
 		List<String> failedMethods = new ArrayList<>();
 		try {
 
-			Iterator<RecordResult> it = JCorridoreCore.runRecord(clazz);
-			List<Method> constraints = JCorridoreCore.extractConstraints(clazz);
+			RecordResult rr = JCorridoreCore.runRecord(clazz, method);
 
-			Object instance = clazz.newInstance();
+			if (rr != null) {
 
-			PlainTextRecordDataBase db = new PlainTextRecordDataBase(path, filename);
-			while (it.hasNext()) {
-				RecordResult rr = it.next();
+				Object instance = clazz.newInstance();
+
+				PlainTextRecordDataBase db = new PlainTextRecordDataBase(path);
 				RecordEntry re = new RecordEntry(rr);
-				
+
 				logger.info("Running on \"" + re.versionedMethodIdentifier + "\"...");
 
 				if (!db.containsRecordFor(re.versionedMethodIdentifier)) {
 					logger.info("For \"" + re.versionedMethodIdentifier + "\" does not exists a database record currently.");
 					db.storeRecord(re);
 				} else {
-					for (Method method : constraints) {
+					if (JCorridoreCore.checkConstraints(clazz, method)) {
 						Constraint c = method.getAnnotation(Constraint.class);
 						final String versionedMethodIdentifier = ReflectionUtils.makeMethodIdentifier(instance, method) + "$" + c.revisionReference();
 
 						int lastSize = failedMethods.size();
 						if (versionedMethodIdentifier.equals(re.versionedMethodIdentifier)) {
-							
+
 							logger.debug("Check constraints for \"" + re.versionedMethodIdentifier + "\"...");
 
 							for (RecordEntry entry : db.get(re.versionedMethodIdentifier)) {
@@ -72,10 +71,14 @@ public class JCorridore {
 							logger.info("Method \"" + re.versionedMethodIdentifier + "\" passes.");
 							db.storeRecord(re);
 						}
+					} else {
+						logger.info("Method \"" + re.versionedMethodIdentifier + "\" passes.");
+						db.storeRecord(re);
 					}
+
 				}
+				db.save();
 			}
-			db.save();
 
 		} catch (Exception e) {
 			e.printStackTrace();
