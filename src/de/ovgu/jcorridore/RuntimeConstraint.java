@@ -207,7 +207,9 @@ public class RuntimeConstraint {
 			if (!propFileUrls.isEmpty()) {
 				final String configFile = propFileUrls.get(0).getFile();
 				logger.info("Configuration file found: " + configFile);
-				config = new Configuration(configFile);
+				if (new File(configFile).canRead())
+					config = new Configuration(configFile);
+				else logger.info("Unable to read file (running local?): " + configFile);
 			} else {
 				logger.warn("Configuration file missing in class path. Default location for record database is used: "
 						+ Configuration.KEY_STORE_AT_DEFAULT
